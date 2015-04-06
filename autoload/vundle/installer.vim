@@ -285,7 +285,7 @@ func! vundle#installer#delete(bang, dir_name) abort
   let bundle = vundle#config#init_bundle(a:dir_name, {})
   let cmd .= ' '.vundle#installer#shellesc(bundle.path())
 
-  let out = s:system(cmd)
+  let out = vundle#installer#system(cmd)
 
   call s:log('')
   call s:log('Plugin '.a:dir_name)
@@ -345,7 +345,7 @@ endf
 func! s:get_current_origin_url(bundle) abort
   let cmd = 'cd '.vundle#installer#shellesc(a:bundle.path()).' && git config --get remote.origin.url'
   let cmd = vundle#installer#shellesc_cd(cmd)
-  let out = s:strip(s:system(cmd))
+  let out = s:strip(vundle#installer#system(cmd))
   return out
 endf
 
@@ -359,7 +359,7 @@ endf
 func! s:get_current_sha(bundle)
   let cmd = 'cd '.vundle#installer#shellesc(a:bundle.path()).' && git rev-parse HEAD'
   let cmd = vundle#installer#shellesc_cd(cmd)
-  let out = s:system(cmd)[0:15]
+  let out = vundle#installer#system(cmd)[0:15]
   return out
 endf
 
@@ -446,10 +446,10 @@ func! s:sync(bang, bundle) abort
       return 'todate'
   endif
 
-  let out = s:system(cmd)
   call s:log('')
   call s:log('Plugin '.a:bundle.name_spec)
   call s:log(cmd, '$ ')
+  let out = vundle#installer#system(cmd)
   call s:log(out, '> ')
 
   if 0 != v:shell_error
@@ -510,8 +510,14 @@ endf
 " cmd    -- the command passed to system() (string)
 " return -- the return value from system()
 " ---------------------------------------------------------------------------
-func! s:system(cmd) abort
-  return system(a:cmd)
+func! vundle#installer#system(cmd) abort
+  if has("win32") || has("win64")
+    " see cmd.exe docs (scroll down to remarks):
+    " https://technet.microsoft.com/de-de/library/cc771320(v=ws.10).aspx
+    return system('"'.a:cmd.'"')
+  else
+    return system(a:cmd)
+  endif
 endf
 
 
